@@ -1,59 +1,75 @@
-# Codex 鍩虹鎸囦护瑕嗙洊鍖?
-鐢ㄤ竴浠芥敼鍐欏悗鐨?base instructions 鏇挎崲 Codex 鐨勯粯璁ゅ熀纭€鎸囦护锛屽苟杩藉姞涓€鏉?developer 浼樺厛绾у０鏄庛€傜洰鏍囨槸璁╂ā鍨嬩粠鐢ㄦ埛鐩爣涓庡繀瑕佹潯浠舵帹瀵兼渶鐭疄鐜帮紝鎶婃棤渚濇嵁鐨勯槻寰℃€х紪绋嬨€侀闃叉€ф娊璞″拰渚嬭楠岃瘉鍘嬪埌鏈€浣庛€?
-## 鍓嶇疆鏉′欢
+# Codex 基础指令覆盖包
 
-- Windows锛孭owerShell 5.1 鎴?PowerShell 7+
-- Codex 宸插畨瑁呭苟鍚姩杩囪嚦灏戜竴娆★紝瀛樺湪 `%USERPROFILE%\.codex\config.toml`
-- 閰嶇疆涓嶅湪榛樿浣嶇疆鏃讹紝璁剧疆鐜鍙橀噺 `CODEX_HOME` 鎸囧悜瀹?
-## 瀹夎
+用一份改写后的 base instructions 替换 Codex 的默认基础指令，并追加一条 developer 优先级声明。目标是让模型从用户目标与必要条件推导最短实现，把无依据的防御性编程、预防性抽象和例行验证压到最低。
+
+## 前置条件
+
+- Windows，PowerShell 5.1 或 PowerShell 7+
+- Codex 已安装并启动过至少一次，存在 `%USERPROFILE%\.codex\config.toml`
+- 配置不在默认位置时，设置环境变量 `CODEX_HOME` 指向它
+
+## 安装
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-鑴氭湰鎵ц鍥涙锛?
-1. 瑙ｆ瀽 `CODEX_HOME` 鎴?`%USERPROFILE%\.codex`锛岀‘璁?`config.toml` 瀛樺湪锛?2. 澶囦唤涓?`config.toml.bak-<鏃堕棿鎴?`锛?3. 鍦ㄩ涓?`[table]` 涔嬪墠鍐欏叆涓や釜椤跺眰閿€斺€擿model_instructions_file` 鎸囧悜鏈寘 `instructions.md` 鐨勭粷瀵硅矾寰勶紙璺緞鍦ㄨ繍琛屾椂鐢辫剼鏈綅缃帹瀵硷紝鑴氭湰鍐呮病鏈夌粷瀵硅矾寰勶級锛宍developer_instructions` 璇诲彇 `developer-instructions.txt`锛?4. 鍥炶鏍￠獙涓や釜閿悇鍑虹幇涓€娆°€?
-閲嶅杩愯浼氭浛鎹㈡棫鍊硷紝涓嶄細鍙犲姞銆?
-## 楠岃瘉
+脚本执行四步：
 
-瀹屽叏閫€鍑?Codex锛堝寘鎷墭鐩樿繘绋嬶級锛岄噸鏂版墦寮€锛屾柊寮€浼氳瘽鍚庤闂畠绯荤粺鎻愮ず璇嶇殑绗竴鍙ャ€傚畨瑁呮垚鍔熸椂鍥炵瓟浠?`You are Codex, a coding agent.` 寮€澶淬€?
-涔熷彲浠ョ洿鎺ユ煡鐪嬮厤缃細
+1. 解析 `CODEX_HOME` 或 `%USERPROFILE%\.codex`，确认 `config.toml` 存在；
+2. 备份为 `config.toml.bak-<时间戳>`；
+3. 在首个 `[table]` 之前写入两个顶层键——`model_instructions_file` 指向本包 `instructions.md` 的绝对路径（路径在运行时由脚本位置推导，脚本内没有绝对路径），`developer_instructions` 读取 `developer-instructions.txt`；
+4. 回读校验两个键各出现一次。
+
+重复运行会替换旧值，不会叠加。
+
+## 验证
+
+完全退出 Codex（包括托盘进程），重新打开，新开会话后询问它系统提示词的第一句。安装成功时回答以 `You are Codex, a coding agent.` 开头。
+
+也可以直接查看配置：
 
 ```powershell
 Select-String -Path "$env:USERPROFILE\.codex\config.toml" -Pattern 'model_instructions_file|developer_instructions'
 ```
 
-## 鍗歌浇
+## 卸载
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 ```
 
-鍒犻櫎涓や釜椤跺眰閿苟鐣欎笅澶囦唤锛汣odex 閲嶅惎鍚庡洖鍒伴粯璁ゅ熀纭€鎸囦护銆?
-## 鐢熸晥鑼冨洿
+删除两个顶层键并留下备份；Codex 重启后回到默认基础指令。
 
-| 椤?| 鏄惁鍙楁湰鍖呭奖鍝?|
+## 生效范围
+
+| 项 | 是否受本包影响 |
 |---|---|
-| base instructions | 鏇挎崲涓?`instructions.md`锛堟爣鍑?Responses 妯″紡锛?|
-| developer 娈?| 杩藉姞 `developer-instructions.txt` 鐨勫唴瀹?|
-| `approvals` / `permissions` / `auto_review` | 涓嶅彈褰卞搷锛岀敱鏈嶅姟绔ā鍨嬮厤缃笅鍙?|
-| 鏈嶅姟绔?`persistent_instructions` | 浠嶇劧瀛樺湪锛涘叾涓缓璁€渧erifying that a change took effect鈥濈殑鍚庣画宸ヤ綔鐢?developer 娈靛帇鍒?|
-| 宸叉墦寮€鐨勪細璇?| 涓嶉噸杞斤紝闇€瑕佹柊浼氳瘽 |
+| base instructions | 替换为 `instructions.md`（标准 Responses 模式） |
+| developer 段 | 追加 `developer-instructions.txt` 的内容 |
+| `approvals` / `permissions` / `auto_review` | 不受影响，由服务端模型配置下发 |
+| 服务端 `persistent_instructions` | 仍然存在；其中建议“verifying that a change took effect”的后续工作由 developer 段压制 |
+| 已打开的会话 | 不重载，需要新会话 |
 
-## 鍏煎鎬?
-**Responses Lite 涓嬩笉鏇挎崲锛屽彧杩藉姞銆?* 鏍囧噯 Responses 妯″紡涓紝`model_instructions_file` 鏁存鏇挎崲妯″瀷鑷甫鐨勫熀纭€鎸囦护锛涘紑鍚?Responses Lite 鍚庯紝鍚屼竴浠藉唴瀹逛細浣滀负涓€鏉″悗缃?developer 娑堟伅鍔犲叆锛屾ā鍨嬪悓鏃剁湅鍒板畼鏂?base 韬唤涓庤嚜瀹氫箟鎸囦护銆傞渶瑕佹暣娈垫浛鎹㈡椂鍏抽棴 Responses Lite銆傚弬瑙?[openai/codex#38355](https://github.com/openai/codex/issues/38355)銆?
-**瀹樻柟閰嶇疆 schema 瀵规瀛楁鏈夋槑纭姖闃汇€?* `codex-rs/core/config.schema.json` 鍘熸枃锛?
+## 兼容性
+
+**Responses Lite 下不替换，只追加。** 标准 Responses 模式中，`model_instructions_file` 整段替换模型自带的基础指令；开启 Responses Lite 后，同一份内容会作为一条后置 developer 消息加入，模型同时看到官方 base 身份与自定义指令。需要整段替换时关闭 Responses Lite。参见 [openai/codex#38355](https://github.com/openai/codex/issues/38355)。
+
+**官方配置 schema 对此字段有明确劝阻。** `codex-rs/core/config.schema.json` 原文：
+
 > Optional path to a file containing model instructions that will override the built-in instructions for the selected model. Users are STRONGLY DISCOURAGED from using this field, as deviating from the instructions sanctioned by Codex will likely degrade model performance.
 
-浣跨敤鍓嶅厛纭杩欐槸浣犺鐨勫彇鑸嶃€俙experimental_instructions_file` 宸插簾寮冨苟鏇村悕涓?`model_instructions_file`銆?
-## 鏂囦欢
+使用前先确认这是你要的取舍。`experimental_instructions_file` 已废弃并更名为 `model_instructions_file`。
 
-| 鏂囦欢 | 鐢ㄩ€?|
+## 文件
+
+| 文件 | 用途 |
 |---|---|
-| `instructions.md` | 鏀瑰啓鍚庣殑 base instructions |
-| `developer-instructions.txt` | developer 浼樺厛绾у０鏄庯紝鍙嚜琛屼慨鏀瑰悗閲嶈 |
-| `install.ps1` | 瀹夎 |
-| `uninstall.ps1` | 鍗歌浇 |
+| `instructions.md` | 改写后的 base instructions |
+| `developer-instructions.txt` | developer 优先级声明，可自行修改后重装 |
+| `install.ps1` | 安装 |
+| `uninstall.ps1` | 卸载 |
 
-## 鏉ユ簮涓庤鍙?
-`instructions.md` 鍩轰簬 Codex 妯″瀷缂撳瓨涓殑 base instructions 鏀瑰啓锛屽師鏂?21,534 瀛楄妭锛孲HA-256 `d12e6dbdfd4a4ddb26a1f6048b69a32b8b32f74e4add9791d1dff7f4cac0b032`銆備粨搴撲笉鍖呭惈涓婃父鍘熸枃銆傛湰鍖呬笌 OpenAI 鏃犻毝灞炲叧绯伙紝涓嶅惈瀹樻柟瀹夎鍖呫€佸嚟鎹垨閬ユ祴銆傝剼鏈互 MIT 璁稿彲鎻愪緵锛沗instructions.md` 鏄涓婃父鍩虹鎸囦护鐨勬敼鍐欙紝鍏跺師濮嬬増鏉冨綊涓婃父浣滆€呫€?
+## 来源与许可
+
+`instructions.md` 基于 Codex 模型缓存中的 base instructions 改写，原文 21,534 字节，SHA-256 `d12e6dbdfd4a4ddb26a1f6048b69a32b8b32f74e4add9791d1dff7f4cac0b032`。仓库不包含上游原文。本包与 OpenAI 无隶属关系，不含官方安装包、凭据或遥测。脚本以 MIT 许可提供；`instructions.md` 是对上游基础指令的改写，其原始版权归上游作者。
