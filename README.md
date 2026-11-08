@@ -25,7 +25,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 ## 验证
 
-完全退出 Codex（包括托盘进程），重新打开，新开会话后询问它系统提示词的第一句。安装成功时回答以 `You are Codex, a coding agent.` 开头。
+完全退出 Codex（包括托盘进程），重新打开，新开会话后询问它系统提示词的第一句。标准 Responses 模式下，安装成功时回答以 `You are Codex, a coding agent.` 开头；Responses Lite 下官方 base 仍在最前，改为询问它是否看到以这句开头的 developer 消息。
 
 也可以直接查看配置：
 
@@ -46,14 +46,14 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 | 项 | 是否受本包影响 |
 |---|---|
 | base instructions | 替换为 `instructions.md`（标准 Responses 模式） |
-| developer 段 | 追加 `developer-instructions.txt` 的内容 |
+| developer 段 | 追加 `developer-instructions.txt`：指令优先级，以及代码、验证、交付三条核心规则 |
 | `approvals` / `permissions` / `auto_review` | 不受影响，由服务端模型配置下发 |
 | 服务端 `persistent_instructions` | 仍然存在；其中建议“verifying that a change took effect”的后续工作由 developer 段压制 |
 | 已打开的会话 | 不重载，需要新会话 |
 
 ## 兼容性
 
-**Responses Lite 下不替换，只追加。** 标准 Responses 模式中，`model_instructions_file` 整段替换模型自带的基础指令；开启 Responses Lite 后，同一份内容会作为一条后置 developer 消息加入，模型同时看到官方 base 身份与自定义指令。需要整段替换时关闭 Responses Lite。参见 [openai/codex#38355](https://github.com/openai/codex/issues/38355)。
+**Responses Lite 下不替换，只追加。** 标准 Responses 模式中，`model_instructions_file` 整段替换模型自带的基础指令；开启 Responses Lite 后，同一份内容会作为一条后置 developer 消息加入，模型同时看到官方 base 身份与自定义指令。两份 base 冲突时（例如官方 base 要求每次改动都跑测试），由 developer 段按名字指定以自定义指令为准；developer 段同时内含决定性规则的精简版，文件层未被采信时仍然生效。需要整段替换时关闭 Responses Lite。参见 [openai/codex#38355](https://github.com/openai/codex/issues/38355)。
 
 **官方配置 schema 对此字段有明确劝阻。** `codex-rs/core/config.schema.json` 原文：
 
