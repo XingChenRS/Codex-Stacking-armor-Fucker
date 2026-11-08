@@ -46,7 +46,7 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 | 项 | 是否受本包影响 |
 |---|---|
 | base instructions | 替换为 `instructions.md`（标准 Responses 模式） |
-| developer 段 | 追加 `developer-instructions.txt`：指令优先级，以及代码、验证、交付三条核心规则 |
+| developer 段 | `codex exec` 注入 `developer-instructions.txt`；Codex 桌面版不注入，见「兼容性」 |
 | `approvals` / `permissions` / `auto_review` | 不受影响，由服务端模型配置下发 |
 | 服务端 `persistent_instructions` | 仍然存在；其中建议“verifying that a change took effect”的后续工作由 developer 段压制 |
 | 已打开的会话 | 不重载，需要新会话 |
@@ -54,6 +54,8 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 ## 兼容性
 
 **Responses Lite 下不替换，只追加。** 标准 Responses 模式中，`model_instructions_file` 整段替换模型自带的基础指令；开启 Responses Lite 后，同一份内容会作为一条后置 developer 消息加入，模型同时看到官方 base 身份与自定义指令。两份 base 冲突时（例如官方 base 要求每次改动都跑测试），由 developer 段按名字指定以自定义指令为准；developer 段同时内含决定性规则的精简版，文件层未被采信时仍然生效。需要整段替换时关闭 Responses Lite。参见 [openai/codex#38355](https://github.com/openai/codex/issues/38355)。
+
+**桌面版不注入 `developer_instructions`。** 同一份 `config.toml`，`codex exec` 的请求里会出现该键对应的 developer 消息；Codex 桌面版的 `app-server` 请求只包含 `model_instructions_file`、`<app-context>`、`<multi_agent_role>` 等消息，没有该键。因此优先级声明与三条核心规则同时写进 `instructions.md` 开头，桌面链路靠文件层生效；`developer-instructions.txt` 仍由安装脚本写入配置，供 CLI 使用。
 
 **官方配置 schema 对此字段有明确劝阻。** `codex-rs/core/config.schema.json` 原文：
 
