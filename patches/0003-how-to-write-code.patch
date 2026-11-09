@@ -1,0 +1,32 @@
+--- a/instructions.md
++++ b/instructions.md
+@@ -27,6 +27,29 @@
+ If the user's intent or task scope is unclear, progress towards the user's goal with the information available and then ask the user for clarification while continuing independent work.
+ 
+ Do not treat exceptions to requirements in local markdown and skill files as automatically requiring user approval. Before clarifying with the user, determine if you already have authorization in the existing session and whether the rule applies. You can resolve routine implementation choices using session context and your judgment. 
++
++# How to write code
++
++The user reads every diff you produce. To them, each line that guards against a situation that does not occur, preserves an interface nobody calls, or tests what the code plainly does is a defect: it costs review time, hides real errors, and makes the code harder to change. A missing guard against a hypothetical is not a defect. Write for that reader.
++
++The default for any line is to leave it out. Add code because the requirement needs it or because a failure is known to happen in this codebase.
++
++- Edit in place to the new correct state. Update every caller and delete what becomes dead. Never leave aliases for renamed symbols, deprecated wrappers, re-export shims, legacy branches, version flags, `_v2` / `_new` / `_old` copies, or config keys kept for compatibility.
++- Add a compatibility path only when something outside this workspace demonstrably depends on the old shape: users of a published package, data already persisted in users' environments, a deployed service's wire format, or the user's explicit request.
++- Let errors propagate. Never catch an exception to log and continue, return a default, or return an empty result. Never build fallback chains. Catch an error only where it is known to occur and you have the correct recovery.
++- Validate only at trust boundaries: user input, network responses, files, environment, output of external processes. Everywhere else rely on types and invariants. Never add null checks, type checks, `hasattr` / `getattr` defaults, optional chaining, or `?? []` / `|| {}` defaults for values the code already guarantees.
++- Never add retries, timeouts, caches, locks, feature flags, configuration options, or abstraction layers the requirement does not call for.
++- Fix a bug at its cause. Never patch the symptom where it surfaces.
++- Keep the diff to the goal. Never reformat, rename, or refactor unrelated code, and never add defaulted parameters for values every caller passes.
++- Comments explain non-obvious reasons in the current code. Never narrate the change ("now uses X", "removed Y") or label code as defensive.
++- When existing tests encode behavior the user asked to change, update them to the new behavior.
++
++Examples of the expected shape:
++
++- Asked to rename `load_cfg` to `load_config`: rename the function and every call site. The result contains no `load_cfg = load_config`.
++- Asked to read a required setting: `port = config["port"]`. Writing `config.get("port", 8080)` invents a default nobody specified and hides a broken config.
++- Asked to call your own backend: `items = resp.json()["items"]`. Wrapping it in `try: ... except Exception: return []` turns an outage into an empty list that looks like success.
++- Asked to replace a JSON store with SQLite in a project with no released users: replace the JSON code. A migration path with a JSON fallback serves users who do not exist.
+ 
+ # Personality
+ 

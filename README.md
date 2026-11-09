@@ -55,7 +55,7 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 
 **桌面版以替换方式送达。** Codex 桌面版的请求中，本文件出现在一条 developer 消息内，包在 `<model_instructions>` 中，并带有 `The following instructions replace the previous base instructions:`。上游 issue 报告称 Responses Lite 下会改为追加后置消息（[openai/codex#38355](https://github.com/openai/codex/issues/38355)），在当前桌面版上未复现该行为。判断依据以请求为准，不以模式名为准。
 
-**桌面版不注入 `developer_instructions`。** 同一份 `config.toml`，`codex exec` 的请求里会出现该键对应的 developer 消息；Codex 桌面版的 `app-server` 请求只有 `<model_instructions>`、`<app-context>`、`<multi_agent_role>` 等消息，没有该键。因此优先级声明与代码、验证、persistent、交付四条规则同时写进 `instructions.md` 开头，桌面链路靠文件层生效；`developer-instructions.txt` 仍由安装脚本写入配置，供 CLI 使用。
+**桌面版不注入 `developer_instructions`。** 同一份 `config.toml`，`codex exec` 的请求里会出现该键对应的 developer 消息；Codex 桌面版的 `app-server` 请求只有 `<model_instructions>`、`<app-context>`、`<multi_agent_role>` 等消息，没有该键。因此 `instructions.md` 开头自带 Precedence 段，点名失效的官方句子，桌面链路靠文件层生效；`developer-instructions.txt` 仍由安装脚本写入配置，供 CLI 使用。
 
 **官方配置 schema 对此字段有明确劝阻。** `codex-rs/core/config.schema.json` 原文：
 
@@ -63,15 +63,39 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 
 使用前先确认这是你要的取舍。`experimental_instructions_file` 已废弃并更名为 `model_instructions_file`。
 
+## 修改与调优
+
+`instructions.md` 是构建产物，由 `reference/instructions.md` 按 `patches/series` 依次打 patch 生成。每个 patch 负责一个方向：
+
+| patch | 作用 |
+|---|---|
+| `0001-identity-and-precedence` | 身份句；Precedence 段点名失效的官方句子 |
+| `0002-scope-and-permission-wording` | 范围由目标决定；停下请求确认时只说一句原因 |
+| `0003-how-to-write-code` | 代码规则、代价框架与正反示例 |
+| `0004-verification` | 默认读代码即验证；删除官方两条测试规则 |
+| `0005-what-you-deliver` | 汇报只提实际运行过的检查；交付面规则，替换官方 PR 段 |
+| `0006-writing-without-hedging` | 结论直接下，禁止预防性免责与收尾提议 |
+| `0007-fewer-declarations` | 去掉 skill 使用通告与引用说明要求 |
+| `0008-closing` | 文末收束段，利用位置靠后的权重 |
+
+```sh
+python build.py                    # 按 series 重新生成 instructions.md
+python build.py capture <名字>     # 把直接改 instructions.md 的内容存成新 patch 并追加到 series
+```
+
+各 patch 改动区域互不重叠，在 `series` 里给任意一行加 `#` 即停用该 patch，重新构建后可单独观察它的影响。构建依赖 git 与本地导出的 `reference/instructions.md`。
+
 ## 文件
 
 | 文件 | 用途 |
 |---|---|
-| `instructions.md` | 改写后的 base instructions |
-| `developer-instructions.txt` | developer 优先级声明，可自行修改后重装 |
+| `instructions.md` | 构建产物，改写后的 base instructions |
+| `patches/` | patch 序列与 `series` 顺序表 |
+| `build.py` | 构建与收录调优 patch |
+| `developer-instructions.txt` | CLI 用的 developer 段：优先级与核心规则，修改后重装 |
 | `install.ps1` | 安装 |
 | `uninstall.ps1` | 卸载 |
 
 ## 来源与许可
 
-`instructions.md` 基于 Codex 模型缓存中的 base instructions 改写，原文 21,534 字节，SHA-256 `d12e6dbdfd4a4ddb26a1f6048b69a32b8b32f74e4add9791d1dff7f4cac0b032`。仓库不包含上游原文。本包与 OpenAI 无隶属关系，不含官方安装包、凭据或遥测。脚本以 MIT 许可提供；`instructions.md` 是对上游基础指令的改写，其原始版权归上游作者。
+`instructions.md` 基于 Codex 模型缓存中的 base instructions 改写，原文 21,534 字节，SHA-256 `d12e6dbdfd4a4ddb26a1f6048b69a32b8b32f74e4add9791d1dff7f4cac0b032`。仓库不包含上游原文，构建前需在本地导出到 `reference/`。本包与 OpenAI 无隶属关系，不含官方安装包、凭据或遥测。脚本以 MIT 许可提供；`instructions.md` 是对上游基础指令的改写，其原始版权归上游作者。

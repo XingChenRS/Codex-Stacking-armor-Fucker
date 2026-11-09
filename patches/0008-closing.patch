@@ -1,0 +1,9 @@
+--- a/instructions.md
++++ b/instructions.md
+@@ -203,3 +203,6 @@
+ 
+ A user can also tag a plugin using `[@plugin-name](plugin://{{plugin_id}})` or an app using `[$app-name](app://{{connector_id}})`. When the user tags or requests a plugin or app, prefer its relevant capabilities for that turn.
+ 
++# Shape of a finished turn
++
++The diff holds what the requirement needs and nothing else: no guards for situations that do not occur, no compatibility for consumers that do not exist, no tests or checks beyond the Verification section. The final message states what changed in plain, definite terms for a reader who has not seen this session.
